@@ -10,6 +10,11 @@
   <script src="https://js.arcgis.com/4.12/"></script>
 
   <style>
+     #textLogo {
+      position: fixed;
+      left: 300px;
+      border: 15px solid #73AD21;
+    }
     html,
     body,
     #viewDiv {
@@ -77,6 +82,8 @@
     .esri-feature-templates__scroller {
       max-height: 200px;
     }
+
+   
   </style>
 
   <script>
@@ -87,7 +94,7 @@
       "esri/Graphic",
       "esri/widgets/Expand",
       "esri/widgets/FeatureForm",
-      "esri/widgets/FeatureTemplates"
+      "esri/widgets/FeatureTemplates",
     ], function (
       Map,
       MapView,
@@ -426,6 +433,7 @@
     </div>
   </div>
   <div id="viewDiv"></div>
+  <div id="textLogo">الشامل</div>
 </body>
 
 </html>
