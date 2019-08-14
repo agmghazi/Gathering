@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Update FeatureLayer using applyEdits() - 4.12</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.12/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.12/"></script>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    #formDiv {
+      width: 100%;
+    }
+
+    .esri-item-list__scroller {
+      overflow-y: visible;
+    }
+
+    .editArea-container {
+      background: #fff;
+      line-height: 1.5em;
+      overflow: auto;
+      padding: 12px 15px;
+      width: 300px;
+    }
+
+    .list-heading {
+      font-weight: normal;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      color: #323232;
+    }
+
+    .or-wrap {
+      background-color: #e0e0e0;
+      height: 1px;
+      margin: 2em 0;
+      overflow: visible;
+    }
+
+    .or-text {
+      background: #fff;
+      line-height: 0;
+      padding: 0 1em;
+      position: relative;
+      bottom: 0.75em;
+    }
+
+    /* override default styles */
+    .esri-feature-form {
+      background: #fff;
+    }
+
+    .esri-feature-templates {
+      width: 256px;
+    }
+
+    .esri-feature-templates__section-header {
+      display: none;
+    }
+
+    .esri-feature-templates__section {
+      box-shadow: none;
+    }
+
+    .esri-feature-templates__scroller {
+      max-height: 200px;
+    }
+  </style>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/FeatureLayer",
+      "esri/Graphic",
+      "esri/widgets/Expand",
+      "esri/widgets/FeatureForm",
+      "esri/widgets/FeatureTemplates"
+    ], function (
+      Map,
+      MapView,
+      FeatureLayer,
+      Graphic,
+      Expand,
+      FeatureForm,
+      FeatureTemplates
+    ) {
+        let editFeature, highlight;
+
+        var nasemSymbol = {
+          type: "simple",
+          symbol: {
+            type: "picture-marker",
+            url: "http://static.arcgis.com/images/Symbols/NPS/npsPictograph_0231b.png",
+            width: "15px",
+            height: "15px"
+          }
+        }
+        var nasemLabel = {
+          symbol: {
+            type: "text",
+            color: "red",
+            haloColor: "white",
+            haloSize: "1.5px",
+            font: {
+              size: "12px",
+              family: "Noto Sans",
+              style: "italic",
+              weight: "normal"
+            }
+          },
+          labelPlacement: "above-center",
+          labelExpressionInfo: {
+            expression: "$feature.HC_NUM"
+          }
+        };
+
+        var popupNasemheads = {
+          "title": "{HC_NUM}",
+          "content": "<b>Name:</b> {HC_NUM}<br><b>FEEDSOURCE:</b> {FEEDSOURCE}"
+        }
+
+        const featureLayer = new FeatureLayer({
+          url:
+            "https://services9.arcgis.com/vpYrvEKDJvmCwoQX/ArcGIS/rest/services/nasem/FeatureServer/0",
+          outFields: ["*"],
+          popupEnabled: true,
+          id: "incidentsLayer",
+          renderer: nasemSymbol,
+          labelingInfo: [nasemLabel],
+          outFields: ["HC_NUM", "FEEDSOURCE"],
+          popupTemplate: popupNasemheads
+
+        });
+
+        const map = new Map({
+          basemap: "topo",
+          layers: [featureLayer]
+        });
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [43.99833650536179, 26.32202464026001],
+          zoom: 4
+        });
+
+        // New FeatureForm and set its layer to 'Incidents' FeatureLayer.
+        // FeatureForm displays attributes of fields specified in fieldConfig.
+        const featureForm = new FeatureForm({
+          container: "formDiv",
+          layer: featureLayer,
+          fieldConfig: [
+            {
+              name: "FEEDSOURCE",
+              label: "أختار نوع النقطه"
+            },
+            {
+              name: "HC_NUM",
+              label: "الوصف ",
+              editable: true,
+              description: "يرجى كتابه رقم الإشتراك",
+              // visibilityExpression: "($feature.status == 'Completed') && (!(IsEmpty($feature.resolution)))",
+              // maxLength:8
+            }
+          ]
+        });
+
+        // Listen to the feature form's submit event.
+        // Update feature attributes shown in the form.
+        featureForm.on("submit", function () {
+          if (editFeature) {
+            // Grab updated attributes from the form.
+            const updated = featureForm.getValues();
+
+            // Loop through updated attributes and assign
+            // the updated values to feature attributes.
+            Object.keys(updated).forEach(function (name) {
+              editFeature.attributes[name] = updated[name];
+            });
+
+            // Setup the applyEdits parameter with updates.
+            const edits = {
+              updateFeatures: [editFeature]
+            };
+            applyEditsToIncidents(edits);
+            document.getElementById("viewDiv").style.cursor = "auto";
+          }
+        });
+
+        // Check if the user clicked on the existing feature
+        selectExistingFeature();
+
+        // The FeatureTemplates widget uses the 'addTemplatesDiv'
+        // element to display feature templates from incidentsLayer
+        const templates = new FeatureTemplates({
+          container: "addTemplatesDiv",
+          layers: [featureLayer]
+        });
+
+        // Listen for when a template item is selected
+        templates.on("select", function (evtTemplate) {
+          // Access the template item's attributes from the event's
+          // template prototype.
+          attributes = evtTemplate.template.prototype.attributes;
+          unselectFeature();
+          document.getElementById("viewDiv").style.cursor = "crosshair";
+
+          // With the selected template item, listen for the view's click event and create feature
+          const handler = view.on("click", function (event) {
+            // remove click event handler once user clicks on the view
+            // to create a new feature
+            handler.remove();
+            event.stopPropagation();
+            featureForm.feature = null;
+
+            if (event.mapPoint) {
+              point = event.mapPoint.clone();
+              point.z = undefined;
+              point.hasZ = false;
+
+              // Create a new feature using one of the selected
+              // template items.
+              editFeature = new Graphic({
+                geometry: point,
+                attributes: {
+                  esriFieldTypeString: attributes.esriFieldTypeString
+                }
+              });
+
+              // Setup the applyEdits parameter with adds.
+              const edits = {
+                addFeatures: [editFeature]
+              };
+              applyEditsToIncidents(edits);
+              document.getElementById("viewDiv").style.cursor = "auto";
+            } else {
+              console.error("event.mapPoint is not defined");
+            }
+          });
+        });
+
+        // Call FeatureLayer.applyEdits() with specified params.
+        function applyEditsToIncidents(params) {
+          // unselectFeature();
+          featureLayer
+            .applyEdits(params)
+            .then(function (editsResult) {
+              // Get the objectId of the newly added feature.
+              // Call selectFeature function to highlight the new feature.
+              if (
+                editsResult.addFeatureResults.length > 0 ||
+                editsResult.updateFeatureResults.length > 0
+              ) {
+                unselectFeature();
+                let objectId;
+                if (editsResult.addFeatureResults.length > 0) {
+                  objectId = editsResult.addFeatureResults[0].objectId;
+                } else {
+                  featureForm.feature = null;
+                  objectId = editsResult.updateFeatureResults[0].objectId;
+                }
+                selectFeature(objectId);
+                if (addFeatureDiv.style.display === "block") {
+                  toggleEditingDivs("none", "block");
+                }
+              }
+              // show FeatureTemplates if user deleted a feature
+              else if (editsResult.deleteFeatureResults.length > 0) {
+                toggleEditingDivs("block", "none");
+              }
+            })
+            .catch(function (error) {
+              console.log("===============================================");
+              console.error(
+                "[ applyEdits ] FAILURE: ",
+                error.code,
+                error.name,
+                error.message
+              );
+              console.log("error = ", error);
+            });
+        }
+
+        // Check if a user clicked on an incident feature.
+        function selectExistingFeature() {
+          view.on("click", function (event) {
+            // clear previous feature selection
+            unselectFeature();
+            if (
+              document.getElementById("viewDiv").style.cursor != "crosshair"
+            ) {
+              view.hitTest(event).then(function (response) {
+                // If a user clicks on an incident feature, select the feature.
+                if (response.results.length === 0) {
+                  toggleEditingDivs("block", "none");
+                } else if (
+                  response.results[0].graphic &&
+                  response.results[0].graphic.layer.id == "incidentsLayer"
+                ) {
+                  if (addFeatureDiv.style.display === "block") {
+                    toggleEditingDivs("none", "block");
+                  }
+                  selectFeature(
+                    response.results[0].graphic.attributes[
+                    featureLayer.objectIdField
+                    ]
+                  );
+                }
+              });
+            }
+          });
+        }
+
+        // Highlights the clicked feature and display
+        // the feature form with the incident's attributes.
+        function selectFeature(objectId) {
+          // query feature from the server
+          featureLayer
+            .queryFeatures({
+              objectIds: [objectId],
+              outFields: ["*"],
+              returnGeometry: true
+            })
+            .then(function (results) {
+              if (results.features.length > 0) {
+                editFeature = results.features[0];
+
+                // display the attributes of selected feature in the form
+                featureForm.feature = editFeature;
+
+                // highlight the feature on the view
+                view.whenLayerView(editFeature.layer).then(function (layerView) {
+                  highlight = layerView.highlight(editFeature);
+                });
+              }
+            });
+        }
+
+        // Expand widget for the editArea div.
+        const editExpand = new Expand({
+          expandIconClass: "esri-icon-edit",
+          expandTooltip: "Expand Edit",
+          expanded: true,
+          view: view,
+          content: document.getElementById("editArea")
+        });
+
+        view.ui.add(editExpand, "top-right");
+        // input boxes for the attribute editing
+        const addFeatureDiv = document.getElementById("addFeatureDiv");
+        const attributeEditing = document.getElementById("featureUpdateDiv");
+
+        // Controls visibility of addFeature or attributeEditing divs
+        function toggleEditingDivs(addDiv, attributesDiv) {
+          addFeatureDiv.style.display = addDiv;
+          attributeEditing.style.display = attributesDiv;
+
+          document.getElementById(
+            "updateInstructionDiv"
+          ).style.display = addDiv;
+        }
+
+        // Remove the feature highlight and remove attributes
+        // from the feature form.
+        function unselectFeature() {
+          if (highlight) {
+            highlight.remove();
+          }
+        }
+
+        // Update attributes of the selected feature.
+        document.getElementById("btnUpdate").onclick = function () {
+          // Fires feature form's submit event.
+          featureForm.submit();
+        };
+
+        // Delete the selected feature. ApplyEdits is called
+        // with the selected feature to be deleted.
+        document.getElementById("btnDelete").onclick = function () {
+          // setup the applyEdits parameter with deletes.
+          const edits = {
+            deleteFeatures: [editFeature]
+          };
+          applyEditsToIncidents(edits);
+          document.getElementById("viewDiv").style.cursor = "auto";
+        };
+      });
+  </script>
+</head>
+
+<body>
+  <div id="editArea" class="editArea-container esri-widget--panel">
+    <div id="addFeatureDiv" style="display:block;">
+
+      <div id="addTemplatesDiv" style="background:#fff;"></div>
+    </div>
+
+    <div id="featureUpdateDiv" style="display:none; margin-top: 1em;">
+      <h3 class="list-heading">أدخل بيانات النقطه</h3>
+      <div id="attributeArea">
+        <div id="formDiv"></div>
+        <input type="button" class="esri-button" value="تعديل النقطه" id="btnUpdate" />
+      </div>
+      <br />
+      <div id="deleteArea">
+        <input type="button" class="esri-button" value="حذف النقطه" id="btnDelete" />
+      </div>
+    </div>
+
+    <div id="updateInstructionDiv" style="text-align:center; display:block">
+      <p class="or-wrap"><span class="or-text">أو</span></p>
+      <p id="selectHeader"> إختار اى نقطه او شكل للتعديل عليه </p>
+    </div>
+  </div>
+  <div id="viewDiv"></div>
+</body>
+
+</html>
