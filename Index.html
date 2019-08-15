@@ -4,17 +4,19 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>Update FeatureLayer using applyEdits() - 4.12</title>
+  <title>Gathering Data</title>
 
   <link rel="stylesheet" href="https://js.arcgis.com/4.12/esri/themes/light/main.css" />
   <script src="https://js.arcgis.com/4.12/"></script>
 
   <style>
-     #textLogo {
-      position: fixed;
-      left: 300px;
-      border: 15px solid #73AD21;
+    #textLogo {
+      z-index: 999;
+      position: absolute;
+      bottom: 15px;
+      left: 5px;
     }
+
     html,
     body,
     #viewDiv {
@@ -82,11 +84,11 @@
     .esri-feature-templates__scroller {
       max-height: 200px;
     }
-
-   
   </style>
 
   <script>
+    var map;
+    var view;
     require([
       "esri/Map",
       "esri/views/MapView",
@@ -106,7 +108,7 @@
     ) {
         let editFeature, highlight;
 
-        var nasemSymbol = {
+        var nasemPointSymbol = {
           type: "simple",
           symbol: {
             type: "picture-marker",
@@ -115,7 +117,7 @@
             height: "15px"
           }
         }
-        var nasemLabel = {
+        var nasemPointLabel = {
           symbol: {
             type: "text",
             color: "red",
@@ -134,7 +136,7 @@
           }
         };
 
-        var popupNasemheads = {
+        var popupnasemPointheads = {
           "title": "{HC_NUM}",
           "content": "<b>Name:</b> {HC_NUM}<br><b>FEEDSOURCE:</b> {FEEDSOURCE}"
         }
@@ -145,24 +147,78 @@
           outFields: ["*"],
           popupEnabled: true,
           id: "incidentsLayer",
-          renderer: nasemSymbol,
-          labelingInfo: [nasemLabel],
+          renderer: nasemPointSymbol,
+          labelingInfo: [nasemPointLabel],
           outFields: ["HC_NUM", "FEEDSOURCE"],
-          popupTemplate: popupNasemheads
+          popupTemplate: popupnasemPointheads
 
         });
 
-        const map = new Map({
+
+
+        ////////////////////
+        var nasemLineSymbol = {
+          type: "simple",
+          symbol: {
+            type: "simple-line",
+            cap: "round",
+            color: [255, 0, 0, 0.5],
+            width: "5px",
+            style: "solid"
+          }
+        }
+
+        var nasemLineLabel = {
+          symbol: {
+            type: "text",
+            color: "black",
+            haloColor: "white",
+            haloSize: "1.5px",
+            font: {
+              size: "13px",
+              family: "Noto Sans",
+              style: "italic",
+              weight: "normal"
+            }
+          },
+          labelPlacement: "above-center",
+          labelExpressionInfo: {
+            expression: "$feature.MATERIAL_E"
+          }
+        };
+
+        var popupNasemLineheads = {
+          "title": "{HC_NUM}",
+          "content": "<b>MATERIAL_E:</b> {MATERIAL_E}<br><b>FEEDSOURCE:</b> {FEEDSOURCE}"
+        }
+
+        const NasemLineLayer = new FeatureLayer({
+          url:
+            "https://services9.arcgis.com/vpYrvEKDJvmCwoQX/ArcGIS/rest/services/mainline_nasim/FeatureServer/0",
+          outFields: ["*"],
+          popupEnabled: true,
+          id: "NamseLineLayer",
+          renderer: nasemLineSymbol,
+          labelingInfo: [nasemLineLabel],
+          outFields: ["MATERIAL_E", "FEEDSOURCE"],
+          popupTemplate: popupNasemLineheads
+
+        });
+
+
+        map = new Map({
           basemap: "topo",
-          layers: [featureLayer]
+          layers: [ NasemLineLayer,featureLayer]
         });
 
-        const view = new MapView({
+        view = new MapView({
           container: "viewDiv",
           map: map,
-          center: [43.99833650536179, 26.32202464026001],
-          zoom: 4
+          center: [44.01215524620569, 26.325544199397182],
+          zoom: 15
         });
+
+        // nasem point editor:-
 
         // New FeatureForm and set its layer to 'Incidents' FeatureLayer.
         // FeatureForm displays attributes of fields specified in fieldConfig.
@@ -176,7 +232,7 @@
             },
             {
               name: "HC_NUM",
-              label: "الوصف ",
+              label: "الوصف",
               editable: true,
               description: "يرجى كتابه رقم الإشتراك",
               // visibilityExpression: "($feature.status == 'Completed') && (!(IsEmpty($feature.resolution)))",
@@ -432,8 +488,10 @@
       <p id="selectHeader"> إختار اى نقطه او شكل للتعديل عليه </p>
     </div>
   </div>
+  <div id="textLogo"> <b>Made with 💚 by <a href="https://agmghazi.blogspot.com" target="_blank"> Developer: Ahmed Gamal
+      </a>:: <a href="https://www.facebook.com/bondk.cr" target="_blank">Analyst: Bondk CR </a> </b></div>
   <div id="viewDiv"></div>
-  <div id="textLogo">الشامل</div>
+
 </body>
 
 </html>
