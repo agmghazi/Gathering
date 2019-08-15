@@ -97,6 +97,7 @@
       "esri/widgets/Expand",
       "esri/widgets/FeatureForm",
       "esri/widgets/FeatureTemplates",
+      "esri/widgets/Search"
     ], function (
       Map,
       MapView,
@@ -104,7 +105,8 @@
       Graphic,
       Expand,
       FeatureForm,
-      FeatureTemplates
+      FeatureTemplates,
+      Search
     ) {
         let editFeature, highlight;
 
@@ -162,7 +164,7 @@
           symbol: {
             type: "simple-line",
             cap: "round",
-            color: [255, 0, 0, 0.5],
+            color: [0, 0, 255, 0.3],
             width: "5px",
             style: "solid"
           }
@@ -208,7 +210,7 @@
 
         map = new Map({
           basemap: "topo",
-          layers: [ NasemLineLayer,featureLayer]
+          layers: [NasemLineLayer, featureLayer]
         });
 
         view = new MapView({
@@ -218,8 +220,55 @@
           zoom: 15
         });
 
-        // nasem point editor:-
+        //this code for search
 
+        var searchWidget = new Search({
+          view: view,
+          allPlaceholder: "Search here",
+          sources: [
+            {
+              layer: NasemLineLayer,
+              searchFields: ["MATERIAL_E"],
+              displayField: "MATERIAL_E",
+              exactMatch: false,
+              outFields: ["MATERIAL_E", "FEEDSOURCE"],
+              name: "Nasem Mainline",
+              placeholder: "example: 3708"
+            },
+            {
+              layer: featureLayer,
+              searchFields: ["HC_NUM", "FEEDSOURCE"],
+              suggestionTemplate: "{HC_NUM}, HC_NUM: {HC_NUM}",
+              exactMatch: false,
+              outFields: ["*"],
+              placeholder: "example: Casey",
+              name: "Nasem Meters Point",
+              zoomScale: 500000,
+              resultSymbol: {
+                type: "picture-marker", // autocasts as new PictureMarkerSymbol()
+                url:
+                  "https://developers.arcgis.com/javascript/latest/sample-code/widgets-search-multiplesource/live/images/senate.png",
+                height: 36
+              }
+            }
+          ],
+          includeDefaultSources: false
+        });
+
+        // Add the search widget to the top left corner of the view
+        view.ui.add(searchWidget, {
+          position: "top-left"
+        });
+
+        //this for get any think in map by event
+        // view.on("click", function (event) {
+        //     console.log(event.mapPoint.latitude);
+        //     console.log(event.mapPoint.longitude);
+
+        // })
+
+
+        // nasem point editor:-
         // New FeatureForm and set its layer to 'Incidents' FeatureLayer.
         // FeatureForm displays attributes of fields specified in fieldConfig.
         const featureForm = new FeatureForm({
