@@ -26,7 +26,10 @@
       "esri/widgets/AreaMeasurement2D",
       "esri/widgets/Locate",
       "esri/widgets/BasemapGallery",
-      "esri/widgets/Legend"
+      "esri/widgets/Legend",
+      "esri/widgets/Track",
+      "esri/widgets/LayerList",
+      "esri/widgets/CoordinateConversion",
     ], function (
       Map,
       MapView,
@@ -40,7 +43,10 @@
       AreaMeasurement2D,
       Locate,
       BasemapGallery,
-      Legend
+      Legend,
+      Track,
+      LayerList,
+      CoordinateConversion
     ) {
         let editFeature, highlight;
         var activeWidget = null;
@@ -144,7 +150,7 @@
 
 
         map = new Map({
-          basemap: "topo",
+          basemap: "satellite",
           layers: [NasemLineLayer, featureLayer]
         });
 
@@ -154,13 +160,56 @@
           center: [44.01215524620569, 26.325544199397182],
           zoom: 15
         });
-
-        // add legend
-        let legend = new Legend({
+        
+        //add goto x y
+        var ccWidget = new CoordinateConversion({
           view: view
         });
-        view.ui.add(legend, "bottom-right");
-        
+
+        view.ui.add(ccWidget, "bottom-left");
+
+        //add layer List
+        const layerList = new LayerList({
+          view: view,
+          listItemCreatedFunction: function (event) {
+            const item = event.item;
+            if (item.layer.type != "group") { // don't show legend twice
+              item.panel = {
+                content: "legend",
+                open: false
+              };
+            }
+          }
+        });
+        view.ui.add(layerList, "bottom-right");
+
+        // Create an instance of the Track widget
+        // and add it to the view's UI
+        var track = new Track({
+          view: view
+        });
+        view.ui.add(track, "top-left");
+
+        // The sample will start tracking your location
+        // once the view becomes ready
+        view.when(function () {
+          track.stop();
+        });
+
+        // add legend
+        // let legend = new Legend({
+        //   view: view,
+        //   // layerInfos: [{
+        //   //   layer: featureLayer,
+        //   //   title: "Legend"
+        //   // }]
+        // });
+        // legend.style = {
+        //   type: "classic",
+        //   layout: "stack"
+        // };
+        // view.ui.add(legend, "bottom-right");
+
         // Create a BasemapGallery widget instance and set
         // its container to a div element
 
@@ -195,13 +244,13 @@
         view.ui.add(bgExpand, "top-right");
 
         // Add the locate widget to the top left corner of the view
-        var locateBtn = new Locate({
-          view: view
-        });
+        // var locateBtn = new Locate({
+        //   view: view
+        // });
 
-        view.ui.add(locateBtn, {
-          position: "top-left"
-        });
+        // view.ui.add(locateBtn, {
+        //   position: "top-left"
+        // });
 
 
         // add the toolbar for the measurement widgets
@@ -277,7 +326,7 @@
         //this code for search
         var searchWidget = new Search({
           view: view,
-          allPlaceholder: "Search here",
+          allPlaceholder: "أبحث هنا",
           sources: [
             {
               layer: NasemLineLayer,
