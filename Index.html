@@ -21,7 +21,10 @@
       "esri/widgets/Expand",
       "esri/widgets/FeatureForm",
       "esri/widgets/FeatureTemplates",
-      "esri/widgets/Search"
+      "esri/widgets/Search",
+      "esri/widgets/DistanceMeasurement2D",
+      "esri/widgets/AreaMeasurement2D",
+      "esri/widgets/Locate"
     ], function (
       Map,
       MapView,
@@ -30,9 +33,13 @@
       Expand,
       FeatureForm,
       FeatureTemplates,
-      Search
+      Search,
+      DistanceMeasurement2D,
+      AreaMeasurement2D,
+      Locate
     ) {
         let editFeature, highlight;
+        var activeWidget = null;
 
         var nasemPointSymbol = {
           type: "simple",
@@ -143,9 +150,88 @@
           center: [44.01215524620569, 26.325544199397182],
           zoom: 15
         });
+        
+        // Add the locate widget to the top left corner of the view
+        var locateBtn = new Locate({
+          view: view
+        });
 
+        view.ui.add(locateBtn, {
+          position: "top-left"
+        });
+
+
+        // add the toolbar for the measurement widgets
+        view.ui.add("topbar", "bottom-left");
+
+        document
+          .getElementById("distanceButton")
+          .addEventListener("click", function () {
+            setActiveWidget(null);
+            if (!this.classList.contains("active")) {
+              setActiveWidget("distance");
+            } else {
+              setActiveButton(null);
+            }
+          });
+
+        document
+          .getElementById("areaButton")
+          .addEventListener("click", function () {
+            setActiveWidget(null);
+            if (!this.classList.contains("active")) {
+              setActiveWidget("area");
+            } else {
+              setActiveButton(null);
+            }
+          });
+
+        function setActiveWidget(type) {
+          switch (type) {
+            case "distance":
+              activeWidget = new DistanceMeasurement2D({
+                view: view
+              });
+
+              // skip the initial 'new measurement' button
+              activeWidget.viewModel.newMeasurement();
+
+              view.ui.add(activeWidget, "top-right");
+              setActiveButton(document.getElementById("distanceButton"));
+              break;
+            case "area":
+              activeWidget = new AreaMeasurement2D({
+                view: view
+              });
+
+              // skip the initial 'new measurement' button
+              activeWidget.viewModel.newMeasurement();
+
+              view.ui.add(activeWidget, "top-right");
+              setActiveButton(document.getElementById("areaButton"));
+              break;
+            case null:
+              if (activeWidget) {
+                view.ui.remove(activeWidget);
+                activeWidget.destroy();
+                activeWidget = null;
+              }
+              break;
+          }
+        }
+
+        function setActiveButton(selectedButton) {
+          // focus the view to activate keyboard shortcuts for sketching
+          view.focus();
+          var elements = document.getElementsByClassName("active");
+          for (var i = 0; i < elements.length; i++) {
+            elements[i].classList.remove("active");
+          }
+          if (selectedButton) {
+            selectedButton.classList.add("active");
+          }
+        }
         //this code for search
-
         var searchWidget = new Search({
           view: view,
           allPlaceholder: "Search here",
@@ -389,7 +475,7 @@
         const editExpand = new Expand({
           expandIconClass: "esri-icon-edit",
           expandTooltip: "Expand Edit",
-          expanded: true,
+          expanded: false,
           view: view,
           content: document.getElementById("editArea")
         });
@@ -457,13 +543,18 @@
     </div>
 
     <div id="updateInstructionDiv" style="text-align:center; display:block">
-      <p class="or-wrap"><span class="or-text">أو</span></p>
-      <p id="selectHeader"> إختار اى نقطه او شكل للتعديل عليه </p>
+      <!-- <p class="or-wrap"><span class="or-text">أو</span></p> -->
+      <!-- <p id="selectHeader"> إختار اى نقطه او شكل للتعديل عليه </p> -->
     </div>
   </div>
   <div id="textLogo"> <b>Made 💚 by <a href="https://agmghazi.blogspot.com" target="_blank"> GIS Developer: Ahmed Gamal
       </a></b></div>
   <div id="viewDiv"></div>
+  <div id="topbar">
+    <button class="action-button esri-icon-minus" id="distanceButton" type="button"
+      title="Measure distance between two or more points"></button>
+    <button class="action-button esri-icon-polygon" id="areaButton" type="button" title="Measure area"></button>
+  </div>
 
 </body>
 
