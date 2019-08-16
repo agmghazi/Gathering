@@ -24,7 +24,8 @@
       "esri/widgets/Search",
       "esri/widgets/DistanceMeasurement2D",
       "esri/widgets/AreaMeasurement2D",
-      "esri/widgets/Locate"
+      "esri/widgets/Locate",
+      "esri/widgets/BasemapGallery"
     ], function (
       Map,
       MapView,
@@ -36,7 +37,8 @@
       Search,
       DistanceMeasurement2D,
       AreaMeasurement2D,
-      Locate
+      Locate,
+      BasemapGallery
     ) {
         let editFeature, highlight;
         var activeWidget = null;
@@ -150,7 +152,40 @@
           center: [44.01215524620569, 26.325544199397182],
           zoom: 15
         });
-        
+
+        // Create a BasemapGallery widget instance and set
+        // its container to a div element
+
+        var basemapGallery = new BasemapGallery({
+          view: view,
+          container: document.createElement("div")
+        });
+
+        // Create an Expand instance and set the content
+        // property to the DOM node of the basemap gallery widget
+        // Use an Esri icon font to represent the content inside
+        // of the Expand widget
+
+        var bgExpand = new Expand({
+          view: view,
+          content: basemapGallery
+        });
+
+        // close the expand whenever a basemap is selected
+        basemapGallery.watch("activeBasemap", function () {
+          var mobileSize =
+            view.heightBreakpoint === "xsmall" ||
+            view.widthBreakpoint === "xsmall";
+
+          if (mobileSize) {
+            bgExpand.collapse();
+          }
+        });
+
+        // Add the expand instance to the ui
+
+        view.ui.add(bgExpand, "top-right");
+
         // Add the locate widget to the top left corner of the view
         var locateBtn = new Locate({
           view: view
