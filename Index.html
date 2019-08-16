@@ -25,7 +25,8 @@
       "esri/widgets/DistanceMeasurement2D",
       "esri/widgets/AreaMeasurement2D",
       "esri/widgets/Locate",
-      "esri/widgets/BasemapGallery"
+      "esri/widgets/BasemapGallery",
+      "esri/widgets/Legend"
     ], function (
       Map,
       MapView,
@@ -38,7 +39,8 @@
       DistanceMeasurement2D,
       AreaMeasurement2D,
       Locate,
-      BasemapGallery
+      BasemapGallery,
+      Legend
     ) {
         let editFeature, highlight;
         var activeWidget = null;
@@ -153,6 +155,12 @@
           zoom: 15
         });
 
+        // add legend
+        let legend = new Legend({
+          view: view
+        });
+        view.ui.add(legend, "bottom-right");
+        
         // Create a BasemapGallery widget instance and set
         // its container to a div element
 

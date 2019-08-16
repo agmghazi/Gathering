@@ -1,14 +1,14 @@
-
 #textLogo {
   z-index: 999;
-  position: absolute;
   bottom: 15px;
   left: 5px;
+  position: absolute;
+  padding: 0 12px 0 12px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
 }
 
-html,
-body,
-#viewDiv {
+html, body, #viewDiv {
   padding: 0;
   margin: 0;
   height: 100%;
@@ -54,6 +54,7 @@ body,
 }
 
 /* override default styles */
+
 .esri-feature-form {
   background: #fff;
 }
@@ -90,8 +91,7 @@ body,
   box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
-.action-button:hover,
-.action-button:focus {
+.action-button:hover, .action-button:focus {
   background: #0079c1;
   color: #e4e4e4;
 }
