@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>Navigation Toolbar - 4.10</title>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #Navigationtools {
+        text-align: center;
+      }
+
+      .tool {
+        padding-top: 3px;
+        padding: 4px 2px;
+      }
+
+      .Navigationtool.disabled,
+      .Navigationtool.disabled:hover {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      .Navigationtool:hover,
+      .Navigationtool.selected:hover {
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .Navigationtool.selected {
+        background-color: rgba(0, 0, 0, 0.3);
+      }
+      .Navigationtool {
+        height: 20px;
+        width: 20px;
+        margin: 0.3em;
+      }
+    </style>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.10/esri/css/main.css"
+    />
+    <script src="https://js.arcgis.com/4.10/"></script>
+
+    <script>
+      var _prevExtent,
+        _preExtent,
+        _currentvExtent,
+        _extentHistory,
+        evtViewDragHandler,
+        evtViewKeyDownHandler,
+        draw,
+        fullExtent;
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/core/watchUtils",
+        "dojo/dom-class",
+        "dojo/dom",
+        "dojo/on",
+        "esri/views/2d/draw/Draw",
+        "esri/geometry/Extent",
+        "esri/Graphic",
+      ], function (
+        Map,
+        MapView,
+        watchUtils,
+        domClass,
+        dom,
+        on,
+        Draw,
+        Extent,
+        Graphic
+      ) {
+        _prevExtent = false;
+        _preExtent = null;
+        _currentExtent = null;
+        _extentHistory = [];
+        _extentHistoryIndx = 0;
+        _nextExtent = false;
+        var map = new Map({
+          basemap: "streets",
+        });
+
+        var view = new MapView({
+          container: "viewDiv",
+          map: map,
+          zoom: 4,
+          center: [15, 65], // longitude, latitude
+        });
+
+        watchUtils.whenTrue(view, "ready", function () {
+          fullExtent = view.extent.clone();
+          draw = new Draw({
+            view: view,
+          });
+          initToolbar();
+          watchUtils.whenOnce(view, "extent", function () {
+            watchUtils.when(view, "stationary", function (evt) {
+              if (evt) {
+                extentChangeHandler(view.extent);
+              }
+            });
+          });
+        });
+
+        function extentChangeHandler(evt) {
+          if (_prevExtent || _nextExtent) {
+            _currentExtent = evt;
+          } else {
+            _preExtent = _currentExtent;
+            _currentExtent = evt;
+            _extentHistory.push({
+              preExtent: _preExtent,
+              currentExtent: _currentExtent,
+            });
+            _extentHistoryIndx = _extentHistory.length - 1;
+          }
+          _prevExtent = _nextExtent = false;
+          extentHistoryChange();
+        }
+
+        function extentHistoryChange() {
+          if (_extentHistory.length === 0 || _extentHistoryIndx === 0) {
+            domClass.add(dom.byId("zoomprev"), "disabled");
+          } else {
+            domClass.remove(dom.byId("zoomprev"), "disabled");
+          }
+          if (
+            _extentHistory.length === 0 ||
+            _extentHistoryIndx === _extentHistory.length - 1
+          ) {
+            domClass.add(dom.byId("zoomnext"), "disabled");
+          } else {
+            domClass.remove(dom.byId("zoomnext"), "disabled");
+          }
+        }
+
+        function enableViewPanning() {
+          if (evtViewDragHandler) {
+            evtViewDragHandler.remove();
+            evtViewDragHandler = null;
+          }
+          if (evtViewKeyDownHandler) {
+            evtViewKeyDownHandler.remove();
+            evtViewKeyDownHandler = null;
+          }
+        }
+
+        function disableViewPanning() {
+          if (evtViewDragHandler) {
+            evtViewDragHandler.remove();
+            evtViewDragHandler = null;
+          }
+          if (evtViewKeyDownHandler) {
+            evtViewKeyDownHandler.remove();
+            evtViewKeyDownHandler = null;
+          }
+          evtViewDragHandler = view.on("drag", function (event) {
+            // prevents panning with the mouse drag event
+            event.stopPropagation();
+          });
+
+          evtViewKeyDownHandler = view.on("key-down", function (event) {
+            // prevents panning with the arrow keys
+            var keyPressed = event.key;
+            if (keyPressed.slice(0, 5) === "Arrow") {
+              event.stopPropagation();
+            }
+          });
+        }
+
+        function displayCrosshairCursor() {
+          this.view &&
+            this.view.container &&
+            this.view.container.style &&
+            "crosshair" !== this.view.container.style.cursor &&
+            (this.view.container.style.cursor = "crosshair");
+        }
+        function displayPointerCursor() {
+          this.view &&
+            this.view.container &&
+            this.view.container.style &&
+            "pointer" !== this.view.container.style.cursor &&
+            (this.view.container.style.cursor = "pointer");
+        }
+        function displayDefaultCursor() {
+          this.view &&
+            this.view.container &&
+            this.view.container.style &&
+            "default" !== this.view.container.style.cursor &&
+            (this.view.container.style.cursor = "default");
+        }
+
+        function removeCurrentSelTool() {
+          view.popup.close();
+          domClass.remove(dom.byId("panmap"), "selected");
+          domClass.remove(dom.byId("zoomin"), "selected");
+          domClass.remove(dom.byId("zoomout"), "selected");
+        }
+
+        function drawRect(event) {
+          var vertices = event.vertices;
+          //remove existing graphic
+          view.graphics.removeAll();
+          if (vertices.length < 2) {
+            return;
+          }
+
+          // create a new extent
+          var extent = getExtentfromVertices(vertices);
+
+          var graphic = new Graphic({
+            geometry: extent,
+            symbol: {
+              type: "simple-fill", // autocasts as SimpleFillSymbol
+              color: [0, 0, 0, 0.3],
+              style: "solid",
+              outline: {
+                // autocasts as SimpleLineSymbol
+                color: [255, 0, 0],
+                width: 1,
+              },
+            },
+          });
+
+          view.graphics.add(graphic);
+        }
+
+        function zoomIn(evt) {
+          draw.reset();
+          view.graphics.removeAll();
+          var action = draw.create("rectangle");
+          view.focus();
+          action.on("vertex-add", drawRect);
+          action.on("draw-complete", zoomIn);
+          action.on("cursor-update", drawRect);
+          if (evt.vertices.length === 1) {
+            view.goTo({ scale: view.scale * 0.5 });
+            return;
+          }
+          var extent = getExtentfromVertices(evt.vertices);
+          if (extent.width !== 0 || extent.height !== 0) {
+            view.goTo(extent);
+          }
+        }
+
+        function zoomOut(evt) {
+          var vertices = evt.vertices;
+          draw.reset();
+          view.graphics.removeAll();
+          var action = draw.create("rectangle");
+          view.focus();
+          action.on("vertex-add", drawRect);
+          action.on("draw-complete", zoomOut);
+          action.on("cursor-update", drawRect);
+          if (evt.vertices.length === 1) {
+            view.goTo({ scale: view.scale * 2 });
+            return;
+          }
+          var sx = vertices[0][0],
+            sy = vertices[0][1];
+          var ex = vertices[1][0],
+            ey = vertices[1][1];
+          var rect = {
+            x: Math.min(sx, ex),
+            y: Math.max(sy, ey),
+            width: Math.abs(sx - ex),
+            height: Math.abs(sy - ey),
+            spatialReference: view.spatialReference,
+          };
+          if (rect.width !== 0 || rect.height !== 0) {
+            var scrPnt1 = view.toScreen(rect);
+            var scrPnt2 = view.toScreen({
+              x: rect.x + rect.width,
+              y: rect.y,
+              spatialReference: rect.spatialReference,
+            });
+            var mWidth = view.extent.width;
+            var delta =
+              ((mWidth * view.width) / Math.abs(scrPnt2.x - scrPnt1.x) -
+                mWidth) /
+              2;
+            var vExtent = view.extent;
+            view.goTo(
+              new Extent({
+                xmin: vExtent.xmin - delta,
+                ymin: vExtent.ymin - delta,
+                xmax: vExtent.xmax + delta,
+                ymax: vExtent.ymax + delta,
+                spatialReference: vExtent.spatialReference,
+              })
+            );
+          }
+        }
+
+        function getExtentfromVertices(vertices) {
+          var sx = vertices[0][0],
+            sy = vertices[0][1];
+          var ex = vertices[1][0],
+            ey = vertices[1][1];
+          var rect = {
+            x: Math.min(sx, ex),
+            y: Math.max(sy, ey),
+            width: Math.abs(sx - ex),
+            height: Math.abs(sy - ey),
+            spatialReference: view.spatialReference,
+          };
+          if (rect.width !== 0 || rect.height !== 0) {
+            return new Extent({
+              xmin: parseFloat(rect.x),
+              ymin: parseFloat(rect.y) - parseFloat(rect.height),
+              xmax: parseFloat(rect.x) + parseFloat(rect.width),
+              ymax: parseFloat(rect.y),
+              spatialReference: rect.spatialReference,
+            });
+          } else {
+            return null;
+          }
+        }
+
+        function initToolbar() {
+          on(dom.byId("zoomfull"), "click", function () {
+            view.goTo(fullExtent);
+          });
+          on(dom.byId("zoomnext"), "click", function () {
+            _nextExtent = true;
+            _extentHistoryIndx++;
+            view.goTo(_extentHistory[_extentHistoryIndx].currentExtent);
+          });
+          on(dom.byId("zoomprev"), "click", function () {
+            if (_extentHistory[_extentHistoryIndx].preExtent) {
+              _prevExtent = true;
+              view.goTo(_extentHistory[_extentHistoryIndx].preExtent);
+              _extentHistoryIndx--;
+            }
+          });
+          on(dom.byId("zoomin"), "click", function () {
+            removeCurrentSelTool();
+            disableViewPanning();
+            view.graphics.removeAll();
+            var action = draw.create("rectangle");
+            displayCrosshairCursor();
+            view.focus();
+            action.on("vertex-add", drawRect);
+            action.on("draw-complete", zoomIn);
+            action.on("cursor-update", drawRect);
+            domClass.add(dom.byId("zoomin"), "selected");
+          });
+          on(dom.byId("zoomout"), "click", function () {
+            removeCurrentSelTool();
+            disableViewPanning();
+            view.graphics.removeAll();
+            var action = draw.create("rectangle");
+            displayCrosshairCursor();
+            view.focus();
+            action.on("vertex-add", drawRect);
+            action.on("draw-complete", zoomOut);
+            action.on("cursor-update", drawRect);
+            domClass.add(dom.byId("zoomout"), "selected");
+          });
+          on(dom.byId("panmap"), "click", function () {
+            removeCurrentSelTool();
+            enableViewPanning();
+            displayDefaultCursor();
+            draw.reset();
+            domClass.add(dom.byId("panmap"), "selected");
+          });
+        }
+        view.ui.add("Navigationtools", "top-left");
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="Navigationtools" class="esri-widget">
+      <img
+        src="./image/zoom-in.png"
+        alt="Zoom In"
+        title="Zoom In"
+        class="Navigationtool"
+        id="zoomin"
+      />
+      <img
+        src="./image/zoom-out.png"
+        alt="Zoom Out"
+        title="Zoom Out"
+        class="Navigationtool"
+        id="zoomout"
+      />
+      <img
+        src="./image/drag.png"
+        alt="Pan Map"
+        title="Pan Map"
+        class="Navigationtool selected"
+        id="panmap"
+      />
+      <img
+        src="./image/fullExtent.png"
+        alt="Full Extent"
+        title="Full Extent"
+        class="Navigationtool"
+        id="zoomfull"
+      />
+      <img
+        src="./image/back.png"
+        alt="Back Extent"
+        title="Back Extent"
+        class="Navigationtool"
+        id="zoomprev"
+      />
+      <img
+        src="./image/forward.png"
+        alt="Forward Extent"
+        title="Forward Extent"
+        class="Navigationtool"
+        id="zoomnext"
+      />
+    </div>
+  </body>
+</html>
