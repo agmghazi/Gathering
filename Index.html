@@ -1,53 +1,58 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>Gathering Data</title>
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>Gathering Data</title>
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.12/esri/themes/light/main.css"
+    />
+    <script src="https://js.arcgis.com/4.12/"></script>
 
-  <link rel="stylesheet" href="https://js.arcgis.com/4.12/esri/themes/light/main.css" />
-  <script src="https://js.arcgis.com/4.12/"></script>
-
-  <link rel="stylesheet" href="style.css">
-  <script>
-    var map;
-    var view;
-    require([
-      "esri/Map",
-      "esri/views/MapView",
-      "esri/layers/FeatureLayer",
-      "esri/Graphic",
-      "esri/widgets/Expand",
-      "esri/widgets/FeatureForm",
-      "esri/widgets/FeatureTemplates",
-      "esri/widgets/Search",
-      "esri/widgets/DistanceMeasurement2D",
-      "esri/widgets/AreaMeasurement2D",
-      "esri/widgets/Locate",
-      "esri/widgets/BasemapGallery",
-      "esri/widgets/Legend",
-      "esri/widgets/Track",
-      "esri/widgets/LayerList",
-      "esri/widgets/CoordinateConversion",
-    ], function (
-      Map,
-      MapView,
-      FeatureLayer,
-      Graphic,
-      Expand,
-      FeatureForm,
-      FeatureTemplates,
-      Search,
-      DistanceMeasurement2D,
-      AreaMeasurement2D,
-      Locate,
-      BasemapGallery,
-      Legend,
-      Track,
-      LayerList,
-      CoordinateConversion
-    ) {
+    <link rel="stylesheet" href="style.css" />
+    <script>
+      var map;
+      var view;
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/Graphic",
+        "esri/widgets/Expand",
+        "esri/widgets/FeatureForm",
+        "esri/widgets/FeatureTemplates",
+        "esri/widgets/Search",
+        "esri/widgets/DistanceMeasurement2D",
+        "esri/widgets/AreaMeasurement2D",
+        "esri/widgets/Locate",
+        "esri/widgets/BasemapGallery",
+        "esri/widgets/Legend",
+        "esri/widgets/Track",
+        "esri/widgets/LayerList",
+        "esri/widgets/CoordinateConversion",
+      ], function (
+        Map,
+        MapView,
+        FeatureLayer,
+        Graphic,
+        Expand,
+        FeatureForm,
+        FeatureTemplates,
+        Search,
+        DistanceMeasurement2D,
+        AreaMeasurement2D,
+        Locate,
+        BasemapGallery,
+        Legend,
+        Track,
+        LayerList,
+        CoordinateConversion
+      ) {
         let editFeature, highlight;
         var activeWidget = null;
 
@@ -55,11 +60,12 @@
           type: "simple",
           symbol: {
             type: "picture-marker",
-            url: "http://static.arcgis.com/images/Symbols/NPS/npsPictograph_0231b.png",
+            url:
+              "http://static.arcgis.com/images/Symbols/NPS/npsPictograph_0231b.png",
             width: "15px",
-            height: "15px"
-          }
-        }
+            height: "15px",
+          },
+        };
         var nasemPointLabel = {
           symbol: {
             type: "text",
@@ -70,19 +76,19 @@
               size: "12px",
               family: "Noto Sans",
               style: "italic",
-              weight: "normal"
-            }
+              weight: "normal",
+            },
           },
           labelPlacement: "above-center",
           labelExpressionInfo: {
-            expression: "$feature.HC_NUM"
-          }
+            expression: "$feature.HC_NUM",
+          },
         };
 
         var popupnasemPointheads = {
-          "title": "{HC_NUM}",
-          "content": "<b>Name:</b> {HC_NUM}<br><b>FEEDSOURCE:</b> {FEEDSOURCE}"
-        }
+          title: "{HC_NUM}",
+          content: "<b>Name:</b> {HC_NUM}<br><b>FEEDSOURCE:</b> {FEEDSOURCE}",
+        };
 
         const featureLayer = new FeatureLayer({
           url:
@@ -93,11 +99,8 @@
           renderer: nasemPointSymbol,
           labelingInfo: [nasemPointLabel],
           outFields: ["HC_NUM", "FEEDSOURCE"],
-          popupTemplate: popupnasemPointheads
-
+          popupTemplate: popupnasemPointheads,
         });
-
-
 
         ////////////////////
         var nasemLineSymbol = {
@@ -107,9 +110,9 @@
             cap: "round",
             color: [0, 0, 255, 0.3],
             width: "5px",
-            style: "solid"
-          }
-        }
+            style: "solid",
+          },
+        };
 
         var nasemLineLabel = {
           symbol: {
@@ -121,19 +124,20 @@
               size: "13px",
               family: "Noto Sans",
               style: "italic",
-              weight: "normal"
-            }
+              weight: "normal",
+            },
           },
           labelPlacement: "above-center",
           labelExpressionInfo: {
-            expression: "$feature.MATERIAL_E"
-          }
+            expression: "$feature.MATERIAL_E",
+          },
         };
 
         var popupNasemLineheads = {
-          "title": "{HC_NUM}",
-          "content": "<b>MATERIAL_E:</b> {MATERIAL_E}<br><b>FEEDSOURCE:</b> {FEEDSOURCE}"
-        }
+          title: "{HC_NUM}",
+          content:
+            "<b>MATERIAL_E:</b> {MATERIAL_E}<br><b>FEEDSOURCE:</b> {FEEDSOURCE}",
+        };
 
         const NasemLineLayer = new FeatureLayer({
           url:
@@ -144,26 +148,24 @@
           renderer: nasemLineSymbol,
           labelingInfo: [nasemLineLabel],
           outFields: ["MATERIAL_E", "FEEDSOURCE"],
-          popupTemplate: popupNasemLineheads
-
+          popupTemplate: popupNasemLineheads,
         });
-
 
         map = new Map({
           basemap: "satellite",
-          layers: [NasemLineLayer, featureLayer]
+          layers: [NasemLineLayer, featureLayer],
         });
 
         view = new MapView({
           container: "viewDiv",
           map: map,
           center: [44.01215524620569, 26.325544199397182],
-          zoom: 15
+          zoom: 15,
         });
-        
+
         //add goto x y
         var ccWidget = new CoordinateConversion({
-          view: view
+          view: view,
         });
 
         view.ui.add(ccWidget, "bottom-left");
@@ -173,20 +175,21 @@
           view: view,
           listItemCreatedFunction: function (event) {
             const item = event.item;
-            if (item.layer.type != "group") { // don't show legend twice
+            if (item.layer.type != "group") {
+              // don't show legend twice
               item.panel = {
                 content: "legend",
-                open: false
+                open: false,
               };
             }
-          }
+          },
         });
         view.ui.add(layerList, "bottom-right");
 
         // Create an instance of the Track widget
         // and add it to the view's UI
         var track = new Track({
-          view: view
+          view: view,
         });
         view.ui.add(track, "top-left");
 
@@ -215,7 +218,7 @@
 
         var basemapGallery = new BasemapGallery({
           view: view,
-          container: document.createElement("div")
+          container: document.createElement("div"),
         });
 
         // Create an Expand instance and set the content
@@ -225,7 +228,7 @@
 
         var bgExpand = new Expand({
           view: view,
-          content: basemapGallery
+          content: basemapGallery,
         });
 
         // close the expand whenever a basemap is selected
@@ -251,7 +254,6 @@
         // view.ui.add(locateBtn, {
         //   position: "top-left"
         // });
-
 
         // add the toolbar for the measurement widgets
         view.ui.add("topbar", "bottom-left");
@@ -282,7 +284,7 @@
           switch (type) {
             case "distance":
               activeWidget = new DistanceMeasurement2D({
-                view: view
+                view: view,
               });
 
               // skip the initial 'new measurement' button
@@ -293,7 +295,7 @@
               break;
             case "area":
               activeWidget = new AreaMeasurement2D({
-                view: view
+                view: view,
               });
 
               // skip the initial 'new measurement' button
@@ -335,7 +337,7 @@
               exactMatch: false,
               outFields: ["MATERIAL_E", "FEEDSOURCE"],
               name: "Nasem Mainline",
-              placeholder: "example: 3708"
+              placeholder: "example: 3708",
             },
             {
               layer: featureLayer,
@@ -350,16 +352,16 @@
                 type: "picture-marker", // autocasts as new PictureMarkerSymbol()
                 url:
                   "https://developers.arcgis.com/javascript/latest/sample-code/widgets-search-multiplesource/live/images/senate.png",
-                height: 36
-              }
-            }
+                height: 36,
+              },
+            },
           ],
-          includeDefaultSources: false
+          includeDefaultSources: false,
         });
 
         // Add the search widget to the top left corner of the view
         view.ui.add(searchWidget, {
-          position: "top-left"
+          position: "top-left",
         });
 
         //this for get any think in map by event
@@ -369,17 +371,18 @@
 
         // })
 
-
         // nasem point editor:-
         // New FeatureForm and set its layer to 'Incidents' FeatureLayer.
         // FeatureForm displays attributes of fields specified in fieldConfig.
+        // for more INFO
+        // https://developers.arcgis.com/javascript/latest/api-reference/esri-widgets-FeatureForm-InputField.html
         const featureForm = new FeatureForm({
           container: "formDiv",
           layer: featureLayer,
           fieldConfig: [
             {
               name: "FEEDSOURCE",
-              label: "أختار نوع النقطه"
+              label: "أختار نوع النقطه",
             },
             {
               name: "HC_NUM",
@@ -387,9 +390,9 @@
               editable: true,
               description: "يرجى كتابه رقم الإشتراك",
               // visibilityExpression: "($feature.status == 'Completed') && (!(IsEmpty($feature.resolution)))",
-              maxLength: 8
-            }
-          ]
+              maxLength: 8,
+            },
+          ],
         });
 
         // Listen to the feature form's submit event.
@@ -402,12 +405,13 @@
             // Loop through updated attributes and assign
             // the updated values to feature attributes.
             Object.keys(updated).forEach(function (name) {
+              updated.FEEDSOURCE = "ahmed";
               editFeature.attributes[name] = updated[name];
             });
 
             // Setup the applyEdits parameter with updates.
             const edits = {
-              updateFeatures: [editFeature]
+              updateFeatures: [editFeature],
             };
             applyEditsToIncidents(edits);
             document.getElementById("viewDiv").style.cursor = "auto";
@@ -421,7 +425,7 @@
         // element to display feature templates from incidentsLayer
         const templates = new FeatureTemplates({
           container: "addTemplatesDiv",
-          layers: [featureLayer]
+          layers: [featureLayer],
         });
 
         // Listen for when a template item is selected
@@ -450,13 +454,13 @@
               editFeature = new Graphic({
                 geometry: point,
                 attributes: {
-                  esriFieldTypeString: attributes.esriFieldTypeString
-                }
+                  esriFieldTypeString: attributes.esriFieldTypeString,
+                },
               });
 
               // Setup the applyEdits parameter with adds.
               const edits = {
-                addFeatures: [editFeature]
+                addFeatures: [editFeature],
               };
               applyEditsToIncidents(edits);
               document.getElementById("viewDiv").style.cursor = "auto";
@@ -522,14 +526,14 @@
                   toggleEditingDivs("block", "none");
                 } else if (
                   response.results[0].graphic &&
-                  response.results[0].graphic.layer.id == "incidentsLayer"
+                  response.results[0].graphic.layer.id == "incidentsLayer" //this layer will be edit in DB
                 ) {
                   if (addFeatureDiv.style.display === "block") {
                     toggleEditingDivs("none", "block");
                   }
                   selectFeature(
                     response.results[0].graphic.attributes[
-                    featureLayer.objectIdField
+                      featureLayer.objectIdField
                     ]
                   );
                 }
@@ -546,7 +550,7 @@
             .queryFeatures({
               objectIds: [objectId],
               outFields: ["*"],
-              returnGeometry: true
+              returnGeometry: true,
             })
             .then(function (results) {
               if (results.features.length > 0) {
@@ -556,9 +560,11 @@
                 featureForm.feature = editFeature;
 
                 // highlight the feature on the view
-                view.whenLayerView(editFeature.layer).then(function (layerView) {
-                  highlight = layerView.highlight(editFeature);
-                });
+                view
+                  .whenLayerView(editFeature.layer)
+                  .then(function (layerView) {
+                    highlight = layerView.highlight(editFeature);
+                  });
               }
             });
         }
@@ -569,7 +575,7 @@
           expandTooltip: "Expand Edit",
           expanded: false,
           view: view,
-          content: document.getElementById("editArea")
+          content: document.getElementById("editArea"),
         });
 
         view.ui.add(editExpand, "top-right");
@@ -606,48 +612,73 @@
         document.getElementById("btnDelete").onclick = function () {
           // setup the applyEdits parameter with deletes.
           const edits = {
-            deleteFeatures: [editFeature]
+            deleteFeatures: [editFeature],
           };
           applyEditsToIncidents(edits);
           document.getElementById("viewDiv").style.cursor = "auto";
         };
       });
-  </script>
-</head>
+    </script>
+  </head>
 
-<body>
-  <div id="editArea" class="editArea-container esri-widget--panel">
-    <div id="addFeatureDiv" style="display:block;">
-
-      <div id="addTemplatesDiv" style="background:#fff;"></div>
-    </div>
-
-    <div id="featureUpdateDiv" style="display:none; margin-top: 1em;">
-      <h3 class="list-heading">أدخل بيانات النقطه</h3>
-      <div id="attributeArea">
-        <div id="formDiv"></div>
-        <input type="button" class="esri-button" value="تعديل النقطه" id="btnUpdate" />
+  <body>
+    <div id="editArea" class="editArea-container esri-widget--panel">
+      <div id="addFeatureDiv" style="display: block;">
+        <div id="addTemplatesDiv" style="background: #fff;"></div>
       </div>
-      <br />
-      <div id="deleteArea">
-        <input type="button" class="esri-button" value="حذف النقطه" id="btnDelete" />
+
+      <div id="featureUpdateDiv" style="display: none; margin-top: 1em;">
+        <h3 class="list-heading">أدخل بيانات النقطه</h3>
+        <div id="attributeArea">
+          <div id="formDiv"></div>
+          <input
+            type="button"
+            class="esri-button"
+            value="تعديل النقطه"
+            id="btnUpdate"
+          />
+        </div>
+        <br />
+        <div id="deleteArea">
+          <input
+            type="button"
+            class="esri-button"
+            value="حذف النقطه"
+            id="btnDelete"
+          />
+        </div>
+      </div>
+
+      <div
+        id="updateInstructionDiv"
+        style="text-align: center; display: block;"
+      >
+        <!-- <p class="or-wrap"><span class="or-text">أو</span></p> -->
+        <!-- <p id="selectHeader"> إختار اى نقطه او شكل للتعديل عليه </p> -->
       </div>
     </div>
-
-    <div id="updateInstructionDiv" style="text-align:center; display:block">
-      <!-- <p class="or-wrap"><span class="or-text">أو</span></p> -->
-      <!-- <p id="selectHeader"> إختار اى نقطه او شكل للتعديل عليه </p> -->
+    <div id="textLogo">
+      <b
+        >Made 💚 by
+        <a href="https://agmghazi.blogspot.com" target="_blank">
+          GIS Developer: Ahmed Gamal
+        </a></b
+      >
     </div>
-  </div>
-  <div id="textLogo"> <b>Made 💚 by <a href="https://agmghazi.blogspot.com" target="_blank"> GIS Developer: Ahmed Gamal
-      </a></b></div>
-  <div id="viewDiv"></div>
-  <div id="topbar">
-    <button class="action-button esri-icon-minus" id="distanceButton" type="button"
-      title="Measure distance between two or more points"></button>
-    <button class="action-button esri-icon-polygon" id="areaButton" type="button" title="Measure area"></button>
-  </div>
-
-</body>
-
+    <div id="viewDiv"></div>
+    <div id="topbar">
+      <button
+        class="action-button esri-icon-minus"
+        id="distanceButton"
+        type="button"
+        title="Measure distance between two or more points"
+      ></button>
+      <button
+        class="action-button esri-icon-polygon"
+        id="areaButton"
+        type="button"
+        title="Measure area"
+      ></button>
+    </div>
+  </body>
 </html>
