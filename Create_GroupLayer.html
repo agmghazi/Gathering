@@ -1,0 +1,96 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <title>
+      ArcGIS JavaScript Tutorials: Add a GroupLayer to a LayerList widget
+    </title>
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.15/esri/css/main.css"
+    />
+    <script src="https://js.arcgis.com/4.15/"></script>
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/layers/GroupLayer",
+        "esri/widgets/LayerList",
+      ], function (Map, MapView, FeatureLayer, GroupLayer, LayerList) {
+        var map = new Map({
+          basemap: "topo-vector",
+        });
+
+        var view = new MapView({
+          container: "viewDiv",
+          map: map,
+          center: [-118.80543, 34.027],
+          zoom: 13,
+        });
+
+        // Trailheads feature layer (points)
+        var trailheadsLayer = new FeatureLayer({
+          url:
+            "https://services3.arcgis.com/GVgbJbqm8hXASVYi/arcgis/rest/services/Trailheads/FeatureServer/0",
+        });
+
+        // Trails feature layer (lines)
+        var trailsLayer = new FeatureLayer({
+          url:
+            "https://services3.arcgis.com/GVgbJbqm8hXASVYi/arcgis/rest/services/Trails/FeatureServer/0",
+        });
+
+        // Parks and open spaces (polygons)
+        var parksLayer = new FeatureLayer({
+          url:
+            "https://services3.arcgis.com/GVgbJbqm8hXASVYi/arcgis/rest/services/Parks_and_Open_Space/FeatureServer/0",
+        });
+
+        var layerList = new LayerList({
+          view: view,
+        });
+        // Adds widget below other elements in the top left corner of the view
+        view.ui.add(layerList, {
+          position: "top-left",
+        });
+
+        var myGroupLayer = new GroupLayer({
+          title: "الدمام",
+          layers: [parksLayer, trailsLayer],
+        });
+        var mastrtGroupLayer = new GroupLayer({
+          title: "المنطقه الشرقيه",
+          layers: [myGroupLayer],
+        });
+        map.add(mastrtGroupLayer);
+
+        var myGroupLayer2 = new GroupLayer({
+          title: "الشرقه",
+          layers: [trailheadsLayer],
+        });
+        var mastrtGroupLayer2 = new GroupLayer({
+          title: "المنطقه الغربيه",
+          layers: [myGroupLayer2],
+        });
+        map.add(mastrtGroupLayer2);
+      });
+    </script>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>
