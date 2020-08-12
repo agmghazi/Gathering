@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>
+      MapImageLayer - Set definition expressions on sublayers - 4.14
+    </title>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.14/esri/css/main.css"
+    />
+    <script src="https://js.arcgis.com/4.14/"></script>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/MapImageLayer",
+        "dojo/domReady!",
+      ], function (Map, MapView, MapImageLayer) {
+        /*****************************************************************
+         * Create a MapImageLayer instance pointing to a Map Service
+         * containing data about US Cities, Counties, States and Highways.
+         * Define sublayers with visibility for each layer in Map Service.
+         *****************************************************************/
+        var layer = new MapImageLayer({
+          url:
+            "https://sampleserver6.arcgisonline.com/arcgis/rest/services/USA/MapServer",
+          sublayers: [
+            {
+              id: 3,
+              visible: false,
+            },
+            {
+              id: 2,
+              visible: true,
+            },
+            {
+              id: 1,
+              visible: true,
+            },
+            {
+              id: 0,
+              visible: true,
+            },
+          ],
+        });
+        layer.when(function () {
+          var cities = layer.findSublayerById(0);
+          var citiesQuery = cities.createQuery();
+          citiesQuery.where = "areaname LIKE 'C%'";
+          cities.queryFeatures(citiesQuery).then(function (response) {
+            console.info(response.features);
+            let citiesQueryGeometries = response.features.map(function (
+              feature
+            ) {
+              return feature.geometry;
+            });
+          });
+        });
+        var map = new Map({
+          basemap: "dark-gray",
+          layers: [layer],
+        });
+
+        var view = new MapView({
+          container: "viewDiv",
+          map: map,
+          zoom: 4,
+          center: [-99, 39],
+        });
+      });
+    </script>
+
+    <style>
+      html,
+      body {
+        font-family: sans-serif;
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #viewDiv {
+        position: absolute;
+        right: 0;
+        left: 0;
+        top: 0;
+        bottom: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+  </body>
+</html>

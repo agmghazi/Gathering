@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.15/esri/themes/light/main.css">
+    <script src="https://js.arcgis.com/4.15/"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="header">
+        <label for="countries" id="countriesLabel">Country:</label>
+        <select name="countries" id="countries">
+            <option value="All">All</option>
+        </select>
+        <label for="cities" id="citiesLabel">City:</label>
+        <select name="cities" id="cities">
+            <option value="empty"></option>
+        </select>
+        <span id="result"></span>
+    </div>
+    <div id="divmap"></div>
+</body>
+<script src="script.js"></script>
+
+</html>

@@ -1,0 +1,21 @@
+#header {
+    margin-bottom: 2px;
+}
+
+#cities, #citiesLabel, #result{
+    visibility: hidden;
+}
+
+#result {
+    margin-left: 4px;
+}
+
+select {
+    min-width: 50px;
+    cursor: pointer;
+    height: 24px;
+}
+
+#divmap {
+    width: auto;
+}
