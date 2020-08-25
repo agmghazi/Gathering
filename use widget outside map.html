@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1, maximum-scale=1,user-scalable=no"
+    />
+    <title>Toolbar - 4.14</title>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.14/esri/themes/light/main.css"
+    />
+    <script src="https://js.arcgis.com/4.14/"></script>
+
+    <style>
+      html,
+      body{
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+      #viewDiv {
+        top: 36px;
+        height: calc(100% - 36px);
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        position: absolute;
+      }
+      #toolbar {
+        height: 36px;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        justify-content: end;
+      }
+    </style>
+
+    <script>
+      require([
+        "esri/Map",
+        "esri/views/SceneView",
+        "esri/widgets/Home"
+      ], function(Map, SceneView, Home) {
+        var map = new Map({
+          basemap: "streets",
+          ground: "world-elevation"
+        });
+
+        var view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          center: [-56.049, 38.485, 78],
+          zoom: 3
+        });
+        
+        const toolbarTable = document.createElement("table");
+        toolbarTable.style.opacity = "1";
+        toolbarTable.style.backgroundColor = "#ffffff";
+        const toolbar = document.getElementById('toolbar');
+        const fillerdiv = document.createElement("div");
+        fillerdiv.style.width = "100%";
+        toolbar.appendChild(fillerdiv);
+        toolbar.appendChild(toolbarTable);
+          
+        const row = toolbarTable.insertRow(0);
+        
+        const cell1 = row.insertCell(0);
+        const cDiv1 = document.createElement("div");
+        cell1.appendChild(cDiv1);
+        const cell2 = row.insertCell(1);
+        const cDiv2 = document.createElement("div");
+        cell2.appendChild(cDiv2);
+        const cell3 = row.insertCell(2);
+        const cDiv3 = document.createElement("div");
+        cell3.appendChild(cDiv3);
+        
+        //Note: I'm not planning to add three Home buttons
+        // just used this for testing widget behavior
+        
+        const homeBtn1 = new Home({
+            view : view,
+            container: cDiv1
+        });
+        
+        const homeBtn2 = new Home({
+            view : view,
+            container: cDiv2
+        });
+        
+        const homeBtn3 = new Home({
+            view : view,
+            container: cDiv3
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="toolbar"></div>
+    <div id="viewDiv"></div>
+  </body>
+</html>

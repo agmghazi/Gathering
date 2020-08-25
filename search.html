@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+    <title>Query State Info without Map</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.11/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.11/"></script>
+    <script>
+      require([
+        "dojo/dom", "dojo/on",
+        "esri/widgets/Search",
+        "dojo/domReady!"
+      ], function (dom, on, Search) {
+
+        var searchWidget = new Search({});
+
+        on(dom.byId("execute"), "click", execute);
+
+        function execute () {;
+          searchWidget.on('search-complete', function(result){
+            if(result.results && result.results.length > 0 && result.results[0].results && result.results[0].results.length > 0){
+              var geom = result.results[0].results[0].feature.geometry;
+              console.info(geom);
+              dom.byId("info").innerHTML = geom.latitude + ", " + geom.longitude;
+            }else{
+              dom.byId("info").innerHTML = "No Results found";
+            }
+          });
+          searchWidget.search(dom.byId("stateName").value);
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    US state name :
+    <input type="text" id="stateName" value="California">
+    <input id="execute" type="button" value="Search">
+    <br />
+    <br />
+    <div id="info" style="padding:5px; margin:5px; background-color:#eee;">
+    </div>
+  </body>
+</html>
