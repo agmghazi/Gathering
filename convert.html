@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="Converter.js"></script>
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      var lon = 24.72504500749274;
+      var lat = 58.74554729994484;
+
+      var point = new GeoPoint(lon, lat);
+
+      console.log("lon: " + point.getLonDeg()); // 24° 43' 30.16"
+      console.log("lat: " + point.getLatDeg()); // 58° 44' 43.97"
+
+      var lonDeg = "24° 43' 30.16\"";
+      var latDeg = "58° 44' 43.97\"";
+
+      var pointDeg = new GeoPoint(lonDeg, latDeg);
+
+      console.log("lonDeg: " + pointDeg.getLonDec()); // 24.725044444444443
+      console.log("latDeg: " + pointDeg.getLatDec()); // 58.74554722222222
+    </script>
+  </body>
+</html>
