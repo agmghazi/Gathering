@@ -9,4 +9,4 @@ function getDMS2DD(days, minutes, seconds, direction) {
 }
 
 console.log(getDMS2DD(38, 53, 55, "N"));
-console.log(getDMS2DD(77, 2, 16, "W"));
+console.log(getDMS2DD(77, 2, 16, "E"));
