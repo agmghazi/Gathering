@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport"
+        content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>HAS javascript api 4.13</title>
+
+  <link rel="stylesheet"
+        href="https://js.arcgis.com/4.14/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.14/"></script>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    #optionsDiv {
+      background-color: white;
+      color: black;
+      padding: 6px;
+      max-width: 400px;
+    }
+  </style>
+
+  <script>
+    //let buildPopupContent; // fn used later to build popup content.
+
+    require([
+      "esri/Map",
+      "esri/Graphic",
+      "esri/views/MapView",
+      "esri/layers/FeatureLayer",
+      "esri/PopupTemplate",
+      "esri/geometry/Polygon",
+      "esri/geometry/Point",
+      "esri/geometry/Geometry"
+    ], function (Map, Graphic, MapView, FeatureLayer) {
+
+      let tier_FLayer = new FeatureLayer({
+        url: "https://services.arcgis.com/P3ePLMYs2RVChkJx/ArcGIS/rest/services/ACS_Marital_Status_Boundaries/FeatureServer/2",
+        outFields: ["*"]
+      });
+
+      //let IAH_Elev_FLayer = new FeatureLayer({
+      //  url: "http://10.88.22.95:6080/arcgis/rest/services/HAS/HAS_wm/MapServer/7",
+      //  outFields: ["*"]
+      //});
+      //IAH_Elev_FLayer.visible = false;
+
+      //let EFD_HOU_Elev_FLayer = new FeatureLayer({
+      //  url: "http://10.88.22.95:6080/arcgis/rest/services/HAS/HAS_wm/MapServer/8",
+      //  outFields: ["*"],
+      //});
+      //EFD_HOU_Elev_FLayer.visible = false;
+
+      let map = new Map({
+        basemap: "streets"
+        , layers: [tier_FLayer]//, IAH_Elev_FLayer, EFD_HOU_Elev_FLayer]
+      });
+
+      let view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [-95.4, 29.80],
+        zoom: 11,
+        popup: {
+          //autoOpenEnabled: false,
+          dockEnabled: true,
+          dockOptions: {
+            // dock popup at bottom-right side of view
+            buttonEnabled: false,
+            breakpoint: false,
+            position: "top-right"
+          }
+        }
+      });
+
+      //create graphic for mouse point click
+      let pointGraphic = new Graphic({
+        symbol: {
+          type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
+          color: [0, 0, 139],
+          outline: {
+            color: [255, 255, 255],
+            width: 1.0
+          }
+        }
+      });
+
+      tier_FLayer.load().then(function () {
+        tier_FLayer.popupTemplate = popupTemplate;
+      });
+
+      //IAH_Elev_FLayer.load().then(function () {
+      //  IAH_Elev_FLayer.popupTemplate = popupTemplate;
+      //});
+
+      //EFD_HOU_Elev_FLayer.load().then(function () {
+      //  EFD_HOU_Elev_FLayer.popupTemplate = popupTemplate;
+      //});
+
+      let popupTemplate = {
+        title: "Airport Tier: {Tier}",
+        content:
+          buildPopupContent
+        };
+
+
+      // When the feature is clicked, this function is called. The feature is passed into the function. https://developers.arcgis.com/javascript/latest/sample-code/popuptemplate-function/index.html
+      function buildPopupContent(feature) {
+
+        console.log("feature type = " + feature.graphic.geometry.type); // ERROR: Unable to get property 'type' of undefined or null reference
+        console.log("centroid x " + feature.graphic.geometry.centroid.x); // ERROR: Unable to get property 'centroid' of undefined or null reference
+        console.log("extent center x = " + feature.graphic.geometry.extent.center.x); // ERROR: Unable to get property 'extent' of undefined or null reference
+
+
+        //alert("ObjectId= " + feature.graphic.getAttribute("OBJECTID")); // works
+        //alert("area= " + feature.graphic.getAttribute("Shape.area")); // works
+        //alert("length= " + feature.graphic.getAttribute("Shape.len")); // works
+        //alert("GL= " + feature.graphic.attributes.GL); // works
+        //alert("GL= " + feature.graphic.getAttribute("GL")); // works
+
+        let pointLatDMS = new DMS(feature.latitude); // feature converted to degree minute second.
+        let pointLongDMS = new DMS(feature.longitude);
+
+        let div = document.createElement("div");
+        div.innerHTML = "<b>Check values and click submit to send to the FAA website.</b></br></br>" +
+          "<form action='https://oeaaa.faa.gov/oeaaa/external/gisTools/gisAction.jsp?action=doNoNoticeRequiredTool' target='_blank' method='POST'>" +
+          "<table border='0' cellpadding='0' cellspacing='0' width='800'>" +
+          "<tr>" +
+          "<td width='20%'> Latitude: </td>" +
+          "<td  width='80%'><input type='text' name='latD' id='latD' size='3' maxlength='3' value=" + pointLatDMS.Degree + " tabindex=''> Deg  <input type='text' name='latM' id='latM' size='2' maxlength='2' value=" + pointLatDMS.Minute + " tabindex=''> M  <input type='text' name='latS' id='latS' size='5' maxlength='5' value=" + pointLatDMS.Second + " tabindex=''> S  <select name='latDir' id='latDir' tabindex=''><option value='N'>N</option><option value='S'>S</option></select> </td>" +
+          "</tr>" +
+          "<tr>" +
+          "<td> Longitude: </td>" +
+          "<td><input type='text' name='longD' id='longD' size='3' maxlength='3' value=" + pointLongDMS.Degree + " tabindex=''> Deg  <input type='text' name='longM' id='longM' size='2' maxlength='2' value=" + pointLongDMS.Minute + " tabindex=''> M  <input type='text' name='longS' id='longS' size='5' maxlength='5' value=" + pointLongDMS.Second + " tabindex=''> S  <select name='longDir' id='longDir' tabindex=''><option value='W'>W</option><option value='E'>E</option></select> </td>" +
+          "</tr>" +
+          "<TR>" +
+          "<TD>Horizontal Datum:</TD>" +
+          "<TD><select name='datum' id='datum' tabindex=''><option value='NAD83'>NAD83</option><option value='NAD27' selected >NAD27</option></select></TD>" +
+          "</TR>" +
+          "<TR>" +
+          "<TD>Site Elevation (SE):</TD>" +
+          "<TD><input type='text' name='siteElevation' id='siteElevation' size='5' maxlength='5' value=" + feature.graphic.attributes.GL + " tabindex=''> (nearest foot) </TD>" +
+          "</TR>" +
+          "<TR>" +
+          "<TD>Structure Height (AGL):</TD>" +
+          "<TD><input type='text' name='structureHeight' id='structureHeight' size='5' maxlength='5' value='222' tabindex=''> (nearest foot)</TD>" +
+          "</TR>" +
+          "<TR>" +
+          "<TD>Airspace Elevation (AGL):</TD>" +
+          "<TD><input type='text' name='airspaceElevationAGL' id='airspaceElevationAGL' size='5' maxlength='5' value='444'></TD>" +
+          "</TR>" +
+          "<TR>" +
+          "<TD>Airspace Elevation (AMSL):</TD>" +
+          "<TD><input type='text' name='airspaceElevationAMSL' id='airspaceElevationAMSL' size='5' maxlength='5' value='555'></TD>" +
+          "</TR>" +
+          "<TR>" +
+          "<TD>Maximum Building Height:</TD>" +
+          "<TD><input type='text' name='maxBldgHeight' id='maxBldgHeight' size='5' maxlength='5' value='350'></TD>" +
+          "</TR>" +
+          "<TR>" +
+          "<TD>Airport Tier:</TD>" +
+          "<TD><input type='text' name='airportTier' id='airportTier' size='20' maxlength='20' value=" + feature.graphic.attributes.Tier + "></TD>" +
+          "</TR>" +
+          "<TR>" +
+          "<TD >Traverseway:</TD>" +
+          "<TD ><select name='traverseway' id='traverseway' tabindex=''><option value='NO'>No Traverseway</option><option value='IH'>Interstate Highway</option><option value='OT'>Other Traverseway</option><option value='PR'>Private Road</option><option value='PH'>Public Roadway</option><option value='RR'>Railroad</option><option value='WW'>Waterway</option></select></TD>" +
+          "</TR>" +
+          "<TR>" +
+          "<TD>Is structure on airport:</TD>" +
+          "<TD><select name='onAirport' id='onAirport' tabindex=''><option value='false'>No</option><option value='true' selected >Yes</option></select></TD>" +
+          "</TR>" +
+          "<TR>" +
+          "<td> </td>" +
+          "<input type='submit' value='Submit to FAA Website'>" +
+          "</TR>" +
+          "</table> " +
+          "</form>"
+        return div;
+      }; // end function buildPopupContent (feature)
+
+
+      // Constructor function for DMS objects. https://www.w3schools.com/js/tryit.asp?filename=tryjs_object_constructor
+      function DMS(coordInMeters) {
+        this.Degree = "11";
+        this.Minute = "22";
+        this.Second = "33";
+
+        // To do: convert to degree minute secons
+
+        // How to Convert Decimal Degrees to DMS
+        // 1.For the degrees use the whole number part of the decimal.
+        // 2.For the minutes multiply the remaining decimal by 60. Use the whole number part of the answer as minutes.
+        // 3.For the seconds multiply the new remaining decimal by 60
+      };
+
+
+
+      // Workflow
+      // User will click on the Airport Tiers polygon layer.
+      // A point symbol is added to the map.
+      // Depending on which Airport is clicked on (HOU,IAH,EFD),
+      // the corresponding Airport Elevation layer will be queried.
+      // Elevation info results will populate the popup.
+
+
+      view.on("click", function (event) {
+        view.graphics.remove(pointGraphic);
+        //view.popup.remove();
+        // query Tiers layer.
+        queryFeatures_Tiers(event);
+      });
+
+
+      function queryFeatures_Tiers(screenPoint) {
+        // Converts the given screen point to a map point. This mapPoint is in the units of the map (meters).
+        const mapPoint = view.toMap(screenPoint);
+
+        tier_FLayer
+          .queryFeatures({
+            geometry: mapPoint,
+            spatialRelationship: "intersects",
+            returnGeometry: false,
+            outFields: ["*"]
+          })
+          .then(function (featureSet) {
+            // Note: This function isn't executed when no Tier is returned.
+            // set graphic location to mouse pointer and add to mapview
+            pointGraphic.geometry = mapPoint;
+            view.graphics.add(pointGraphic);
+            //const graphics = results.features;
+
+            let strTier = featureSet.features[0].attributes["Tier"];
+            //alert(strTier);
+
+            // Check user clicked on a Tier polygon
+            // "Hobby", "Ellington", "GBIA"
+            if (strTier.indexOf("GBIA") > -1) {
+              queryFeatures_IAH(mapPoint);
+            } else if (strTier.indexOf("Hobby") > -1) {
+              queryFeatures_EFD_HOU(mapPoint);
+            } else if (strTier.indexOf("Ellington") > -1) {
+              queryFeatures_EFD_HOU(mapPoint);
+            } else {
+              // This is never called.
+              alert("Please click on one of the airports.")
+            }
+          });
+      } // end queryFeatures_Tiers()
+
+
+      function queryFeatures_IAH(mapPoint) {
+        //const point = view.toMap(screenPoint);
+        IAH_Elev_FLayer
+          .queryFeatures({
+            geometry: mapPoint,
+            spatialRelationship: "intersects",
+            returnGeometry: false,
+            outFields: ["*"]
+          })
+          .then(function (featureSet) {
+            // open popup of query result
+            view.popup.open({
+              location: mapPoint,
+              features: featureSet.features,
+              featureMenuOpen: true
+            });
+          });
+      } // end queryFeatures_IAH()
+
+
+      function queryFeatures_EFD_HOU(mapPoint) {
+        EFD_HOU_Elev_FLayer
+          .queryFeatures({
+            geometry: mapPoint,
+            spatialRelationship: "intersects",
+            returnGeometry: false,
+            outFields: ["*"]
+          })
+          .then(function (featureSet) {
+            // open popup of query result
+            view.popup.open({
+              location: mapPoint,
+              features: featureSet.features,
+              featureMenuOpen: true
+            });
+          });
+      } // end queryFeatures_EFD_HOU()
+
+    });
+  </script>
+</head>
+<body>
+  <div id="viewDiv"></div>
+</body>
+</html>

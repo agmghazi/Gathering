@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Search Widget 3D - 4.3</title>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.3/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.3/"></script>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/SceneView",
+      "esri/widgets/Search",
+      "dojo/domReady!"
+    ], function(
+      Map,
+      SceneView,
+      Search) {
+
+      var map = new Map({
+        basemap: "satellite",
+        ground: "world-elevation"
+      });
+
+      var view = new SceneView({
+        scale: 123456789,
+        container: "viewDiv",
+        map: map
+      });
+
+      var searchWidget = new Search({
+        view: view
+      });
+
+  
+
+        
+    console.log(document.getElementById("submitButton"))
+    document.getElementById("submitButton").onclick = (e)=> {
+      e.preventDefault()
+      let el = document.getElementById("input")
+      console.log(el.value)
+      searchWidget.search(el.value).then((result)=> {
+        console.log("result", result)
+      })
+    }
+    });
+
+
+  </script>
+</head>
+
+<body>
+  <div>
+    <form>
+      <input placeholder="Enter your address" type="text" id="input">
+      <button id="submitButton">Submit</button>
+    </form>
+  </div>
+  <div id="viewDiv"></div>
+</body>
+
+</html>
