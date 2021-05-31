@@ -1,0 +1,335 @@
+<!--
+
+To run this demo, you need to replace 'YOUR_API_KEY' with an API key from the ArcGIS Developers dashboard.
+
+Sign up for a free account and get an API key.
+
+https://developers.arcgis.com/documentation/mapping-apis-and-services/get-started/
+
+ -->
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>ArcGIS JavaScript Tutorials: Find a route and directions (Auth)</title>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    .directions {
+      position: fixed;
+      right: 15px;
+      max-height: calc(100% - 45px) !important;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.19/esri/themes/light/main.css">
+  <script src="https://js.arcgis.com/4.19/"></script>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/Graphic",
+      "esri/geometry/Point",
+      "esri/tasks/RouteTask",
+      "esri/tasks/support/RouteParameters",
+      "esri/tasks/support/FeatureSet",
+      "esri/config",
+      "esri/geometry/geometryEngine",
+      "esri/layers/GraphicsLayer",
+    ], (Map, MapView, Graphic, Point, RouteTask, RouteParameters, FeatureSet, esriConfig, geometryEngine, GraphicsLayer) => {
+      const unit = "kilometers";
+
+      const apiKey = "AAPK3dec25c93f77440089acb335a76a63aeRp1-RNQrf3ZDSmSdPcr0qALRsafRK1ieC5iBM7mNBcmj30-BjG0Bucuu5kwLCkLV";
+
+      esriConfig.apiKey = apiKey;
+
+      const center = new Point([-122.62, 45.526201]);
+      const origin = new Point([-122.690176, 45.522054]);
+      const stop = new Point([-122.614995, 45.526201]);
+      const destination = new Point([-122.68782, 45.51238]);
+
+      // Create layers
+      const bufferLayer = new GraphicsLayer({
+        blendMode: "hard-light"
+      });
+
+      const map = new Map({
+        basemap: "satellite",
+        layers: [bufferLayer]
+      });
+
+      createBuffer(center, 5)
+      function createBuffer(point, length) {
+        // buffer
+        const buffer = geometryEngine.geodesicBuffer(
+          point,
+          length,
+          unit
+        );
+
+        let bufferGraphic = new Graphic({
+          geometry: buffer,
+          symbol: {
+            type: "simple-fill",
+            color: [81.6, 11.8, 11.8, 0.3],
+            outline: {
+              color: "#FFEB00",
+              width: 2
+            }
+          }
+        });
+
+        // Update the buffer polygon
+        bufferGraphic.geometry = buffer;
+
+
+        // Create a symbol for drawing the point
+        var textSymbol = {
+          type: "text", // autocasts as new TextSymbol()
+          color: "#77d01e",
+          text: length + " km ",
+          labelPlacement: "above-left",
+          font: { // autocasts as new Font()
+            size: 30,
+            // family: "CalciteWebCoreIcons"
+          }
+        };
+
+        // Create a graphic and add the geometry and symbol to it
+        var LineGraphic = new Graphic({
+          geometry: point,
+          symbol: textSymbol
+        });
+
+
+        bufferLayer.addMany([
+          bufferGraphic,
+          LineGraphic
+        ]);
+
+      }
+
+
+
+      const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: center,
+        zoom: 12,
+        constraints: {
+          snapToZoom: false
+        }
+      });
+
+      view.when(() => {
+        addGraphic("start", origin);
+        addGraphic("stop", stop);
+        // addGraphic("finish", destination);
+        getRoute();
+      });
+
+      view.on("click", (event) => {
+
+        if (view.graphics.length === 0) {
+          addGraphic("start", event.mapPoint);
+        } else if (view.graphics.length === 1) {
+          addGraphic("stop", event.mapPoint);
+          getRoute();
+        }
+        else {
+          view.graphics.removeAll();
+          view.ui.empty("top-right");
+          bufferLayer.removeAll();
+          addGraphic("start", event.mapPoint);
+          createBuffer(event.mapPoint, 5)
+
+        }
+      });
+
+      function addGraphic(type, point) {
+        let color = "#ffffff";
+        let outlineColor = "#000000"
+        let size = "12px";
+        if (type == "start") {
+          color = "#ffffff";
+        } else if (type == "stop") {
+          color = "#000000";
+          outlineColor = "#ffffff";
+          size = "8px";
+        } else {
+          color = "#000000";
+          outlineColor = "#ffffff";
+        }
+        const graphic = new Graphic({
+          symbol: {
+            type: "simple-marker",
+            color: color,
+            size: size,
+            outline: {
+              color: outlineColor,
+              width: "1px"
+            }
+          },
+          geometry: point
+        });
+        view.graphics.add(graphic);
+      }
+      function createLineText(text, geometry) {
+
+        var midIndex = Math.round(geometry.paths[0].length / 2);
+        console.log('midIndex', midIndex);
+        console.log('geometry.paths', geometry.paths);
+        var midPoint = new Point({
+          x: geometry.paths[0][midIndex][0],
+          y: geometry.paths[0][midIndex][1],
+          spatialReference: geometry.spatialReference
+        });
+
+        // Create a symbol for drawing the point
+        var textSymbol = {
+          type: "text", // autocasts as new TextSymbol()
+          color: "#d01ed0",
+          text: text + " km ",
+          labelPlacement: "above-left",
+          font: { // autocasts as new Font()
+            size: 30,
+            // family: "CalciteWebCoreIcons"
+          }
+        };
+
+        // const polyline = {
+        //   type: "polyline", // autocasts as new Polyline()
+        //   paths: geometry
+        // };
+        // Create a graphic and add the geometry and symbol to it
+        var textGraphic = new Graphic({
+          geometry: midPoint,
+          symbol: textSymbol
+        });
+        view.graphics.add(textGraphic);
+
+      }
+
+      function getRoute() {
+
+        const routeTask = new RouteTask({
+          url: "https://route-api.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World"
+        });
+
+        const routeParams = new RouteParameters({
+          stops: new FeatureSet({
+            features: view.graphics.toArray()
+          }),
+          returnDirections: true,
+          directionsLanguage: "es"
+        });
+        routeTask.solve(routeParams)
+          .then((data) => {
+
+            if (data.routeResults.length > 0) {
+              console.log('data', data);
+              console.log('Total_Kilometers', data.routeResults[0].route.attributes.Total_Kilometers);
+              console.log('path', data.routeResults[0].route.geometry.paths);
+
+              let numLine = Number(data.routeResults[0].route.attributes.Total_Kilometers) // The Number() only visualizes the type and is not needed
+              let roundedLine = numLine.toFixed(4);
+              let roundedNum = Number(roundedLine); // toFixed() returns a string (often suitable for printing already)
+
+              createLineText(roundedNum, data.routeResults[0].route.geometry)
+
+              showRoute(data.routeResults[0].route);
+              showDirections(data.routeResults[0].route);
+
+            }
+          })
+          .catch((error) => {
+            console.log(error);
+          })
+      }
+
+      function showRoute(routeResult) {
+        routeResult.symbol = {
+          type: "simple-line",
+          color: [5, 150, 255],
+          width: 3
+        };
+        view.graphics.add(routeResult, 0);
+      }
+
+      function showDirections(directions) {
+        function showRouteDirections(directions) {
+          // const directionsList = document.createElement("ol");
+          console.log('directions', directions.attributes.Total_Kilometers);
+
+          const direction = document.createElement("h5");
+
+          let num = Number(directions.attributes.Total_Kilometers) // The Number() only visualizes the type and is not needed
+          let roundedString = num.toFixed(4);
+          let rounded = Number(roundedString); // toFixed() returns a string (often suitable for printing already)
+
+          direction.innerHTML = "  " + "طول المسار" + " " + rounded + " " + "  كيلومتر";
+          // directionsList.appendChild(direction);
+
+
+          // directions.forEach(function (result, i) {
+
+          // });
+
+          directionsElement.appendChild(direction);
+        }
+
+        const directionsElement = document.createElement("div");
+        directionsElement.innerHTML = "<h3>بيانات المسار</h3>";
+        directionsElement.classList = "esri-widget esri-widget--panel esri-directions__scroller directions";
+        directionsElement.style.marginTop = "0";
+        directionsElement.style.padding = "0 15px";
+        directionsElement.style.minHeight = "365px";
+
+        showRouteDirections(directions);
+
+        view.ui.empty("top-right");
+        view.ui.add(directionsElement, "top-right");
+      }
+
+      // function showDirections(directions) {
+      //   function showRouteDirections(directions) {
+      //     const directionsList = document.createElement("ol");
+      //     directions.forEach(function (result, i) {
+      //       const direction = document.createElement("li");
+      //       direction.innerHTML = result.attributes.text + ((result.attributes.length > 0) ? " (" + result.attributes.length.toFixed(2) + " miles)" : "");
+      //       directionsList.appendChild(direction);
+      //     });
+      //     directionsElement.appendChild(directionsList);
+      //   }
+
+      //   const directionsElement = document.createElement("div");
+      //   directionsElement.innerHTML = "<h3>Directions</h3>";
+      //   directionsElement.classList = "esri-widget esri-widget--panel esri-directions__scroller directions";
+      //   directionsElement.style.marginTop = "0";
+      //   directionsElement.style.padding = "0 15px";
+      //   directionsElement.style.minHeight = "365px";
+
+      //   showRouteDirections(directions);
+
+      //   view.ui.empty("top-right");
+      //   view.ui.add(directionsElement, "top-right");
+      // }
+
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+
+</html>
