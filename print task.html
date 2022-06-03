@@ -1,0 +1,128 @@
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>
+        Intro to MapView - Create a 2D map | Sample | ArcGIS API for JavaScript
+        4.23
+    </title>
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/themes/light/main.css" />
+    <script src="https://js.arcgis.com/4.23/"></script>
+
+    <script>
+        let viewM
+        let parcelKey = 183229
+        let parcelFeatureZoom = 'https://dev.amcde.com/esriproxy/proxy.ashx?https://dev.amcde.com/arcgis/rest/services/AppDeedServices/AppDeedServices/MapServer';
+
+        require(["esri/Map", "esri/views/MapView",
+            "esri/rest/print",
+            "esri/rest/support/PrintTemplate",
+            "esri/rest/support/PrintParameters",
+            "esri/layers/FeatureLayer",
+            "esri/layers/MapImageLayer",
+            "esri/rest/support/Query"],
+            (Map, MapView, print, PrintTemplate, PrintParameters, FeatureLayer, MapImageLayer, Query) => {
+                const map = new Map({
+                    basemap: "topo-vector"
+                });
+
+                viewM = new MapView({
+                    container: "viewDiv",
+                    map: map,
+                    zoom: 6,
+                    center: [-101.60584559661055, 49.9665410849199] // longitude, latitude
+                });
+
+                let feature = new MapImageLayer({
+                    url: parcelFeatureZoom,
+                    sublayers: [
+                        {
+                            id: 1,
+                            visible: true,
+                            definitionExpression: `PARCEL_ID in ('${parcelKey}')`,
+                        },
+                    ],
+                });
+                map.add(feature)
+                feature.when(() => {
+                    feature
+                        .findSublayerById(1)
+                        .load()
+                        .then(() => {
+                            if (feature.findSublayerById(1).loadStatus == 'loaded') {
+                                const query = new Query();
+                                query.where = `PARCEL_ID in ('${parcelKey}')`;
+                                query.outSpatialReference = viewM.spatialReference;
+                                query.returnGeometry = true;
+                                query.outFields = ['*'];
+                                feature
+                                    .findSublayerById(1)
+                                    .queryFeatures(query)
+                                    .then((results) => {
+                                        const features = results.features;
+                                        viewM.goTo(features[0].geometry);
+                                        setTimeout(() => {
+                                            executePrint()
+                                        }, 20000);
+                                    });
+                            }
+                        });
+                });
+
+                // url to the print service
+                const url = "https://dev.amcde.com/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task";
+
+                const template = new PrintTemplate({
+                    format: "PNG8",
+                    exportOptions: {
+                        dpi: 396,
+                        width: 946,
+                        height: 575,
+                        copyrightText: "11"
+                    },
+                    layout: "A4 Landscape",
+                });
+                const params = new PrintParameters({
+                    view: viewM,
+                    template: template
+                });
+
+
+
+                // print when this function is called
+
+                function executePrint() {
+                    print.execute(url, params).then(printResult).catch(printError);
+                }
+
+                function printResult(result) {
+                    console.log(result.url);
+                    window.open(result.url);
+                }
+
+                function printError(err) {
+                    console.log("Something broke: ", err);
+                }
+
+            });
+    </script>
+</head>
+
+<body>
+    <!-- <div id="viewDiv" style="visibility:hidden"></div> -->
+    <div id="viewDiv"></div>
+</body>
+
+</html>
